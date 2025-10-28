@@ -1,6 +1,8 @@
 'use client';
 
-export default function TripDetails({ trip, selectedLocation }) {
+import AddLocationForm from './AddLocationForm.jsx';
+
+export default function TripDetails({ trip, selectedLocation, onLocationCreated }) {
   if (!trip) {
     return (
       <div className="rounded-lg border border-dashed border-orange-200 p-6 text-center text-orange-400">
@@ -20,7 +22,7 @@ export default function TripDetails({ trip, selectedLocation }) {
         </p>
       </div>
 
-      <div>
+      <div className="space-y-4">
         <h3 className="text-lg font-semibold text-gray-800">Locations</h3>
         <ul className="mt-2 space-y-3">
           {(trip.locations || []).map((location) => {
@@ -55,6 +57,8 @@ export default function TripDetails({ trip, selectedLocation }) {
           })}
         </ul>
       </div>
+
+      <AddLocationForm tripId={trip.id} onLocationCreated={onLocationCreated} />
     </div>
   );
 }

@@ -108,6 +108,15 @@ export default function HomePage() {
     }
   }, [selectedTrip, selectedLocation]);
 
+  const handleLocationCreated = async (newLocation) => {
+    const response = await fetch(`${API_BASE_URL}/api/trips/${newLocation.trip_id}`);
+    const data = await response.json();
+    syncTripInState(data);
+    setSelectedTrip(data);
+    const created = data.locations?.find((location) => location.id === newLocation.id) || null;
+    setSelectedLocation(created);
+  };
+
   return (
     <div className="min-h-screen bg-orange-50">
       <main className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10 lg:flex-row">
@@ -121,7 +130,11 @@ export default function HomePage() {
 
           <MapView trips={filteredTrips} onLocationClick={handleLocationClick} />
 
-          <TripDetails trip={selectedTrip} selectedLocation={selectedLocation} />
+          <TripDetails
+            trip={selectedTrip}
+            selectedLocation={selectedLocation}
+            onLocationCreated={handleLocationCreated}
+          />
         </div>
 
         <aside className="w-full max-w-md space-y-6 lg:sticky lg:top-10 lg:h-[calc(100vh-5rem)] lg:overflow-y-auto">
