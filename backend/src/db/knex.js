@@ -1,24 +1,12 @@
 import knex from 'knex';
-import dotenv from 'dotenv';
+import knexfile from '../../knexfile.js';
 
-dotenv.config();
+const environment = process.env.NODE_ENV || 'development';
+const config = knexfile[environment];
 
-const config = {
-  client: 'pg',
-  connection: {
-    host: process.env.DB_HOST || 'db',
-    port: Number(process.env.DB_PORT || 5432),
-    user: process.env.DB_USER || 'travel_app',
-    password: process.env.DB_PASSWORD || 'travel_pass',
-    database: process.env.DB_NAME || 'travel_db'
-  },
-  migrations: {
-    directory: './migrations'
-  },
-  seeds: {
-    directory: './seeds'
-  }
-};
+if (!config) {
+  throw new Error(`Knex configuration for environment "${environment}" is not defined.`);
+}
 
 const db = knex(config);
 
