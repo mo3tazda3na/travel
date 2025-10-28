@@ -59,7 +59,7 @@ The project can be run either entirely through Docker Compose or by starting the
 
 ### 2. Run with Docker Compose (recommended)
 
-1. Build and start the containers:
+1. Build and start the containers. The first startup runs `npm install` in each service to hydrate dependencies inside the containers.
 
    ```bash
    docker compose up --build
