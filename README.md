@@ -42,3 +42,74 @@ docker-compose.yml        # Orchestrates PostgreSQL, Express API, and Next.js we
 ```
 
 Refer to the inline comments in each file for guidance on customization and expansion.
+
+## Local Development
+
+The project can be run either entirely through Docker Compose or by starting the backend and frontend manually.
+
+### 1. Configure environment variables
+
+1. Duplicate the sample environment file and adjust any values if necessary:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. When you run the stack with Docker Compose the defaults will work out of the box. If you are running services manually, update `DB_HOST` to point at your local PostgreSQL instance (for example `localhost`).
+
+### 2. Run with Docker Compose (recommended)
+
+1. Build and start the containers:
+
+   ```bash
+   docker compose up --build
+   ```
+
+2. Once the services are up:
+   - API: http://localhost:4000 (Express + Knex)
+   - Web: http://localhost:3000 (Next.js frontend)
+
+3. The API container automatically applies migrations and seed data on boot via the `seed-data.js` script. If you need to re-run them, enter the backend container and execute `npm run migrate` followed by `npm run seed`.
+
+4. Stop the stack when finished:
+
+   ```bash
+   docker compose down
+   ```
+
+### 3. Run services manually
+
+1. Ensure PostgreSQL is running locally and matches the credentials in your `.env` file. Create the database defined by `DB_NAME` if it does not already exist.
+
+2. Install dependencies:
+
+   ```bash
+   # Backend
+   cd backend
+   npm install
+
+   # Frontend
+   cd ../frontend
+   npm install
+   ```
+
+3. Apply database migrations and seed data from the backend directory:
+
+   ```bash
+   npm run migrate
+   npm run seed
+   ```
+
+4. Start the backend API (from `backend/`):
+
+   ```bash
+   npm run dev
+   ```
+
+5. In a separate terminal start the Next.js frontend (from `frontend/`):
+
+   ```bash
+   npm run dev
+   ```
+
+6. Visit http://localhost:3000 to use the app. The frontend proxies API requests to the backend using the `NEXT_PUBLIC_API_BASE_URL` value.
