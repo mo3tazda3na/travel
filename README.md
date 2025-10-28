@@ -69,6 +69,9 @@ The project can be run either entirely through Docker Compose or by starting the
    - API: http://localhost:4000 (Express + Knex)
    - Web: http://localhost:3000 (Next.js frontend)
 
+   The frontend container sends browser requests to `http://localhost:4000` but calls the API container internally via
+   `API_BASE_URL=http://api:4000`, which is already configured in `docker-compose.yml`.
+
 3. The API container automatically applies migrations and seed data on boot via the `seed-data.js` script. If you need to re-run them, enter the backend container and execute `npm run migrate` followed by `npm run seed`.
 
 4. Stop the stack when finished:
@@ -112,4 +115,6 @@ The project can be run either entirely through Docker Compose or by starting the
    npm run dev
    ```
 
-6. Visit http://localhost:3000 to use the app. The frontend proxies API requests to the backend using the `NEXT_PUBLIC_API_BASE_URL` value.
+6. Visit http://localhost:3000 to use the app. Browser requests are sent to the backend using `NEXT_PUBLIC_API_BASE_URL`. Server-side
+   API routes (used by the Add Trip/Location forms) fall back to the same value unless `API_BASE_URL` is defined, which is useful when
+   running the frontend inside Docker.
