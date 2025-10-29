@@ -8,7 +8,7 @@ export default class Location {
     longitude,
     notes = null,
     imageUrl = null,
-    visitedAt = null
+    visitedAt = null,
   }) {
     this.id = id;
     this.tripId = tripId;

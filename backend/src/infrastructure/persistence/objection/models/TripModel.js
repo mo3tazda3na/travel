@@ -14,9 +14,9 @@ class TripModel extends Model {
         modelClass: LocationModel,
         join: {
           from: 'trips.id',
-          to: 'locations.trip_id'
-        }
-      }
+          to: 'locations.trip_id',
+        },
+      },
     };
   }
 
@@ -24,7 +24,7 @@ class TripModel extends Model {
     return {
       orderByVisited(builder) {
         builder.orderBy('visited_at', 'asc');
-      }
+      },
     };
   }
 }

@@ -1,13 +1,43 @@
 import { Router } from 'express';
 import container from '../../../../container.js';
 import { locationToResponse } from '../../presenters/locationPresenter.js';
+import { sendSuccess } from '../../utils/response.js';
+import RequestRule from '../../validation/RequestRule.js';
+import {
+  string,
+  number,
+  isoDateString,
+  url as urlValidator,
+} from '../../validation/validators.js';
+import validateRequest from '../../validation/index.js';
 
 const router = Router();
+
+const createLocationRules = () => ({
+  body: {
+    trip_id: new RequestRule(number({ integer: true, min: 1 }), {
+      required: true,
+    }),
+    city: new RequestRule(string({ minLength: 1 }), { required: true }),
+    country: new RequestRule(string({ minLength: 1 }), { required: true }),
+    lat: new RequestRule(number({ min: -90, max: 90 }), { required: true }),
+    lng: new RequestRule(number({ min: -180, max: 180 }), { required: true }),
+    notes: new RequestRule(string(), { required: false, defaultValue: '' }),
+    image_url: new RequestRule(urlValidator(), {
+      required: false,
+      defaultValue: null,
+    }),
+    visited_at: new RequestRule(isoDateString(), {
+      required: false,
+      defaultValue: null,
+    }),
+  },
+});
 
 router.get('/', async (_req, res, next) => {
   try {
     const locations = await container.listLocationsUseCase.execute();
-    res.json(locations.map(locationToResponse));
+    sendSuccess(res, locations.map(locationToResponse));
   } catch (error) {
     next(error);
   }
@@ -15,30 +45,22 @@ router.get('/', async (_req, res, next) => {
 
 router.post('/', async (req, res, next) => {
   try {
-    const { trip_id, city, country, lat, lng, notes, image_url, visited_at } = req.body;
+    const { body } = validateRequest(req, createLocationRules());
 
-    if (!trip_id || !city || !country || lat === undefined || lng === undefined) {
-      return res.status(400).json({ message: 'trip_id, city, country, lat, and lng are required' });
-    }
+    const location = await container.addLocationToTripUseCase.execute(
+      body.trip_id,
+      {
+        city: body.city,
+        country: body.country,
+        latitude: body.lat,
+        longitude: body.lng,
+        notes: body.notes ?? '',
+        imageUrl: body.image_url ?? null,
+        visitedAt: body.visited_at ?? null,
+      }
+    );
 
-    const latValue = Number(lat);
-    const lngValue = Number(lng);
-
-    if (Number.isNaN(latValue) || Number.isNaN(lngValue)) {
-      return res.status(400).json({ message: 'lat and lng must be valid numbers' });
-    }
-
-    const location = await container.addLocationToTripUseCase.execute(trip_id, {
-      city,
-      country,
-      latitude: latValue,
-      longitude: lngValue,
-      notes: notes || '',
-      imageUrl: image_url || null,
-      visitedAt: visited_at || null
-    });
-
-    res.status(201).json(locationToResponse(location));
+    sendSuccess(res, locationToResponse(location), { status: 201 });
   } catch (error) {
     next(error);
   }

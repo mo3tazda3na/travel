@@ -1,13 +1,39 @@
 import { Router } from 'express';
 import container from '../../../../container.js';
 import { tripToResponse } from '../../presenters/tripPresenter.js';
+import HttpError from '../../errors/HttpError.js';
+import { sendSuccess } from '../../utils/response.js';
+import RequestRule from '../../validation/RequestRule.js';
+import validateRequest from '../../validation/index.js';
+import { string, number, isoDateString } from '../../validation/validators.js';
 
 const router = Router();
+
+const getTripRules = () => ({
+  params: {
+    id: new RequestRule(number({ integer: true, min: 1 }), { required: true }),
+  },
+});
+
+const createTripRules = () => ({
+  body: {
+    name: new RequestRule(string({ minLength: 1 }), { required: true }),
+    description: new RequestRule(string(), {
+      required: false,
+      defaultValue: '',
+    }),
+    start_date: new RequestRule(isoDateString(), { required: true }),
+    end_date: new RequestRule(isoDateString(), {
+      required: false,
+      defaultValue: null,
+    }),
+  },
+});
 
 router.get('/', async (_req, res, next) => {
   try {
     const trips = await container.listTripsUseCase.execute();
-    res.json(trips.map(tripToResponse));
+    sendSuccess(res, trips.map(tripToResponse));
   } catch (error) {
     next(error);
   }
@@ -15,11 +41,17 @@ router.get('/', async (_req, res, next) => {
 
 router.get('/:id', async (req, res, next) => {
   try {
-    const trip = await container.getTripUseCase.execute(req.params.id);
+    const { params } = validateRequest(req, getTripRules());
+    const trip = await container.getTripUseCase.execute(params.id);
     if (!trip) {
-      return res.status(404).json({ message: 'Trip not found' });
+      throw new HttpError({
+        status: 404,
+        code: 'TRIP_NOT_FOUND',
+        message: 'Trip not found',
+        src: 'http:trips:getById',
+      });
     }
-    res.json(tripToResponse(trip));
+    sendSuccess(res, tripToResponse(trip));
   } catch (error) {
     next(error);
   }
@@ -27,19 +59,16 @@ router.get('/:id', async (req, res, next) => {
 
 router.post('/', async (req, res, next) => {
   try {
-    const { name, description, start_date, end_date } = req.body;
-    if (!name || !start_date) {
-      return res.status(400).json({ message: 'Trip name and start date are required' });
-    }
+    const { body } = validateRequest(req, createTripRules());
 
     const trip = await container.createTripUseCase.execute({
-      name,
-      description: description || '',
-      startDate: start_date,
-      endDate: end_date || null
+      name: body.name,
+      description: body.description ?? '',
+      startDate: body.start_date,
+      endDate: body.end_date ?? null,
     });
 
-    res.status(201).json(tripToResponse(trip));
+    sendSuccess(res, tripToResponse(trip), { status: 201 });
   } catch (error) {
     next(error);
   }

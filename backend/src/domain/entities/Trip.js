@@ -6,7 +6,7 @@ export default class Trip {
     startDate,
     endDate,
     createdAt = null,
-    locations = []
+    locations = [],
   }) {
     this.id = id;
     this.name = name;

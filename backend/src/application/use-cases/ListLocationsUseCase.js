@@ -1,9 +1,9 @@
 export default class ListLocationsUseCase {
-  constructor(tripRepository) {
-    this.tripRepository = tripRepository;
+  constructor(locationRepository) {
+    this.locationRepository = locationRepository;
   }
 
   async execute() {
-    return this.tripRepository.listLocations();
+    return this.locationRepository.listLocations();
   }
 }

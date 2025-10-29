@@ -10,6 +10,6 @@ export const locationToResponse = (location) => {
     lng: location.longitude,
     notes: location.notes,
     image_url: location.imageUrl,
-    visited_at: location.visitedAt
+    visited_at: location.visitedAt,
   };
 };

@@ -7,7 +7,8 @@
     "dev": "nodemon src/app.js",
     "start": "node src/app.js",
     "migrate": "knex migrate:latest",
-    "seed": "node seeds/seed-data.js"
+    "seed": "node seeds/seed-data.js",
+    "lint": "eslint \"src/**/*.js\" --fix"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -15,9 +16,11 @@
     "express": "^4.19.2",
     "knex": "^3.1.0",
     "objection": "^3.1.4",
-    "pg": "^8.11.5"
+    "pg": "^8.11.5",
+    "redis": "^5.9.0"
   },
   "devDependencies": {
+    "eslint": "^8.57.1",
     "nodemon": "^3.1.0"
   }
 }

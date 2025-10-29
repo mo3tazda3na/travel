@@ -3,19 +3,15 @@ export default class TripRepository {
     throw new Error('listTrips must be implemented by subclasses');
   }
 
-  async getTripById(id) {
+  async getTripById(_id) {
     throw new Error('getTripById must be implemented by subclasses');
   }
 
-  async createTrip(trip) {
+  async createTrip(_trip) {
     throw new Error('createTrip must be implemented by subclasses');
   }
 
-  async addLocationToTrip(tripId, location) {
+  async addLocationToTrip(_tripId, _location) {
     throw new Error('addLocationToTrip must be implemented by subclasses');
-  }
-
-  async listLocations() {
-    throw new Error('listLocations must be implemented by subclasses');
   }
 }

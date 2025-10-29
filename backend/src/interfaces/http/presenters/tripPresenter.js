@@ -12,6 +12,6 @@ export const tripToResponse = (trip) => {
     created_at: trip.createdAt,
     locations: Array.isArray(trip.locations)
       ? trip.locations.map(locationToResponse)
-      : []
+      : [],
   };
 };
