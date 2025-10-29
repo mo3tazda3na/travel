@@ -71,6 +71,8 @@ The backend follows a lightweight Domain-Driven Design layout:
   contracts against PostgreSQL.
 - **Interfaces layer** — Express routes and presenters translate HTTP requests/responses to and from the domain model while
   exposing versioned REST resources.
+- Legacy direct-model routes and Knex helpers have been removed so new features flow exclusively through the DDD
+  use cases and repositories, keeping HTTP concerns decoupled from persistence.
 
 ## Local Development
 
