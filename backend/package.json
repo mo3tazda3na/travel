@@ -1,0 +1,34 @@
+{
+  "name": "family-travel-backend",
+  "version": "1.0.0",
+  "main": "src/app.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon src/app.js",
+    "start": "node src/app.js",
+    "migrate": "knex migrate:latest",
+    "seed": "node seeds/seed-data.js",
+    "lint": "eslint \"src/**/*.js\" --fix",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "knex": "^3.1.0",
+    "objection": "^3.1.4",
+    "pg": "^8.11.5",
+    "redis": "^5.9.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.6",
+    "nodemon": "^3.1.0"
+  },
+  "lint-staged": {
+    "src/**/*.js": "eslint"
+  }
+}
