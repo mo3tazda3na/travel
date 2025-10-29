@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { extractDataOrThrow } from '../lib/api.js';
 import AddTripForm from '../components/AddTripForm.jsx';
 import MapView from '../components/MapView.jsx';
 import TripDetails from '../components/TripDetails.jsx';
@@ -14,11 +15,16 @@ export default function HomePage() {
   const [filters, setFilters] = useState({ year: 'all', country: 'all' });
 
   const fetchTrips = async () => {
-    const response = await fetch(API_TRIPS_BASE);
-    const data = await response.json();
-    setTrips(data);
-    if (!selectedTrip && data.length > 0) {
-      setSelectedTrip(data[0]);
+    try {
+      const response = await fetch(API_TRIPS_BASE);
+      const data = await extractDataOrThrow(response);
+      const list = Array.isArray(data) ? data : [];
+      setTrips(list);
+      if (!selectedTrip && list.length > 0) {
+        setSelectedTrip(list[0]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch trips', error);
     }
   };
 
@@ -88,19 +94,27 @@ export default function HomePage() {
   };
 
   const handleSelectTrip = async (trip) => {
-    const response = await fetch(`${API_TRIPS_BASE}/${trip.id}`);
-    const data = await response.json();
-    syncTripInState(data);
-    setSelectedTrip(data);
-    setSelectedLocation(null);
+    try {
+      const response = await fetch(`${API_TRIPS_BASE}/${trip.id}`);
+      const data = await extractDataOrThrow(response);
+      syncTripInState(data);
+      setSelectedTrip(data);
+      setSelectedLocation(null);
+    } catch (error) {
+      console.error(`Failed to fetch trip ${trip.id}`, error);
+    }
   };
 
   const handleLocationClick = async (location) => {
-    const response = await fetch(`${API_TRIPS_BASE}/${location.tripId}`);
-    const data = await response.json();
-    syncTripInState(data);
-    setSelectedTrip(data);
-    setSelectedLocation(location);
+    try {
+      const response = await fetch(`${API_TRIPS_BASE}/${location.tripId}`);
+      const data = await extractDataOrThrow(response);
+      syncTripInState(data);
+      setSelectedTrip(data);
+      setSelectedLocation(location);
+    } catch (error) {
+      console.error(`Failed to fetch trip ${location.tripId}`, error);
+    }
   };
 
   useEffect(() => {
@@ -110,12 +124,16 @@ export default function HomePage() {
   }, [selectedTrip, selectedLocation]);
 
   const handleLocationCreated = async (newLocation) => {
-    const response = await fetch(`${API_TRIPS_BASE}/${newLocation.trip_id}`);
-    const data = await response.json();
-    syncTripInState(data);
-    setSelectedTrip(data);
-    const created = data.locations?.find((location) => location.id === newLocation.id) || null;
-    setSelectedLocation(created);
+    try {
+      const response = await fetch(`${API_TRIPS_BASE}/${newLocation.trip_id}`);
+      const data = await extractDataOrThrow(response);
+      syncTripInState(data);
+      setSelectedTrip(data);
+      const created = data.locations?.find((location) => location.id === newLocation.id) || null;
+      setSelectedLocation(created);
+    } catch (error) {
+      console.error(`Failed to refresh trip ${newLocation.trip_id}`, error);
+    }
   };
 
   return (
