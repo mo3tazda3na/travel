@@ -27,6 +27,6 @@
     "nodemon": "^3.1.0"
   },
   "lint-staged": {
-    "*.js": "eslint --fix"
+    "src/**/*.js": "eslint --fix"
   }
 }
