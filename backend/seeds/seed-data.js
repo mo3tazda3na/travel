@@ -1,4 +1,4 @@
-import db from '../src/db/knex.js';
+import db from '../src/infrastructure/database/knex.js';
 
 const trips = [
   {

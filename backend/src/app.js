@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 
-import apiV1Router from './routes/v1/index.js';
+import apiV1Router from './interfaces/http/routes/v1/index.js';
 
 dotenv.config();
 

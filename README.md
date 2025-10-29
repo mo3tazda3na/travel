@@ -25,18 +25,23 @@ backend/
   Dockerfile              # Development container definition for the API service
   src/
     app.js                # Express app bootstrap registering routes and middleware
-    db/
-      knex.js             # Knex configuration bound to environment variables
-      migrations/
-        202405041200_create_tables.js  # PostgreSQL schema for trips & locations
-    models/
-      trip.js             # Trip data-access helpers
-      location.js         # Location data-access helpers
-    routes/
-      v1/
-        index.js          # API version router that mounts v1 resources
-        trips.js          # Versioned REST endpoints for listing and creating trips
-        locations.js      # Versioned REST endpoints for listing and adding locations
+    container.js          # Simple dependency container wiring repositories to use cases
+    application/
+      use-cases/          # Application services orchestrating domain behavior
+    domain/
+      entities/           # Trip and Location aggregate roots/value objects
+      repositories/       # Repository interfaces describing persistence contracts
+    infrastructure/
+      database/
+        knex.js           # Knex configuration bound to environment variables
+        migrations/       # Database schema definitions
+      persistence/
+        objection/        # Objection.js models and repository implementation
+    interfaces/
+      http/
+        presenters/       # Maps domain entities to JSON responses
+        routes/
+          v1/             # Versioned Express routers for trips and locations
   seeds/
     seed-data.js          # Example seed script with Rome, Istanbul, and Barcelona trips
 .env.example              # Sample environment variables for local development
@@ -53,6 +58,19 @@ The Express backend exposes versioned REST endpoints beneath `/api/v1` so future
 - `GET /api/v1/trips/:id` — fetch a single trip (including locations) by identifier.
 - `POST /api/v1/trips` — create a new trip record.
 - `POST /api/v1/locations` — attach a new location to an existing trip.
+
+## Backend Architecture
+
+The backend follows a lightweight Domain-Driven Design layout:
+
+- **Domain layer** — Entities (`Trip`, `Location`) capture the ubiquitous language and repository interfaces describe the
+  operations the domain expects from persistence.
+- **Application layer** — Use cases orchestrate domain behavior (listing trips, creating a trip, adding a location) without
+  being concerned with technical details.
+- **Infrastructure layer** — Objection.js models, Knex configuration, and repository implementations fulfill the domain
+  contracts against PostgreSQL.
+- **Interfaces layer** — Express routes and presenters translate HTTP requests/responses to and from the domain model while
+  exposing versioned REST resources.
 
 ## Local Development
 

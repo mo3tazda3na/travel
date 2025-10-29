@@ -12,7 +12,7 @@ const baseConfig = {
     database: process.env.DB_NAME || 'travel_db'
   },
   migrations: {
-    directory: './src/db/migrations'
+    directory: './src/infrastructure/database/migrations'
   },
   seeds: {
     directory: './seeds'
