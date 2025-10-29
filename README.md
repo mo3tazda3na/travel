@@ -50,6 +50,9 @@ backend/
     seed-data.js          # Example seed script with Rome, Istanbul, and Barcelona trips
 .env.example              # Sample environment variables for local development
 docker-compose.yml        # Orchestrates PostgreSQL, Express API, and Next.js web containers
+admin/
+  src/                    # Vite + React admin SPA (users, roles, permissions)
+  package.json            # Admin UI dependencies and scripts
 ```
 
 Refer to the inline comments in each file for guidance on customization and expansion.
