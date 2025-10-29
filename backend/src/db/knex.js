@@ -1,4 +1,5 @@
 import knex from 'knex';
+import { Model } from 'objection';
 import knexfile from '../../knexfile.js';
 
 const environment = process.env.NODE_ENV || 'development';
@@ -9,5 +10,7 @@ if (!config) {
 }
 
 const db = knex(config);
+
+Model.knex(db);
 
 export default db;

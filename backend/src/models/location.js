@@ -1,12 +1,19 @@
-import db from '../db/knex.js';
+import { Model } from 'objection';
+import '../db/knex.js';
+
+class Location extends Model {
+  static get tableName() {
+    return 'locations';
+  }
+}
 
 export const createLocation = async (locationData) => {
-  const [location] = await db('locations')
-    .insert(locationData)
-    .returning('*');
-  return location;
+  const insertedLocation = await Location.query().insertAndFetch(locationData);
+  return insertedLocation.toJSON ? insertedLocation.toJSON() : insertedLocation;
 };
 
 export const listLocations = () => {
-  return db('locations').select('*');
+  return Location.query();
 };
+
+export default Location;

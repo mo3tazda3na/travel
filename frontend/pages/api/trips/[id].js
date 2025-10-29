@@ -3,7 +3,7 @@ const API_BASE_URL =
 
 export default async function handler(req, res) {
   const { id } = req.query;
-  const url = `${API_BASE_URL}/api/trips/${id}`;
+  const url = `${API_BASE_URL}/api/v1/trips/${id}`;
 
   if (req.method !== 'GET') {
     res.setHeader('Allow', ['GET']);

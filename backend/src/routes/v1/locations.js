@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createLocation, listLocations } from '../models/location.js';
+import { createLocation, listLocations } from '../../models/location.js';
 
 const router = Router();
 

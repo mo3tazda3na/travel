@@ -2,8 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 
-import tripsRouter from './routes/trips.js';
-import locationsRouter from './routes/locations.js';
+import apiV1Router from './routes/v1/index.js';
 
 dotenv.config();
 
@@ -15,8 +14,8 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
-app.use('/api/trips', tripsRouter);
-app.use('/api/locations', locationsRouter);
+app.use('/api/v1', apiV1Router);
+app.use('/api', apiV1Router);
 
 app.use((err, _req, res, _next) => {
   console.error(err);

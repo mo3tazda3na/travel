@@ -21,7 +21,7 @@ frontend/
   package.json            # Next.js + Leaflet dependencies and scripts
   Dockerfile              # Development container definition for the web app
 backend/
-  package.json            # Express, Knex, and supporting dependencies
+  package.json            # Express, Objection.js, Knex, and supporting dependencies
   Dockerfile              # Development container definition for the API service
   src/
     app.js                # Express app bootstrap registering routes and middleware
@@ -33,8 +33,10 @@ backend/
       trip.js             # Trip data-access helpers
       location.js         # Location data-access helpers
     routes/
-      trips.js            # REST endpoints for listing and creating trips
-      locations.js        # REST endpoints for listing and adding locations
+      v1/
+        index.js          # API version router that mounts v1 resources
+        trips.js          # Versioned REST endpoints for listing and creating trips
+        locations.js      # Versioned REST endpoints for listing and adding locations
   seeds/
     seed-data.js          # Example seed script with Rome, Istanbul, and Barcelona trips
 .env.example              # Sample environment variables for local development
@@ -42,6 +44,15 @@ docker-compose.yml        # Orchestrates PostgreSQL, Express API, and Next.js we
 ```
 
 Refer to the inline comments in each file for guidance on customization and expansion.
+
+## API Versioning
+
+The Express backend exposes versioned REST endpoints beneath `/api/v1` so future breaking changes can ship behind new prefixes. The current surface area is:
+
+- `GET /api/v1/trips` — list all trips with their associated locations ordered by visit date.
+- `GET /api/v1/trips/:id` — fetch a single trip (including locations) by identifier.
+- `POST /api/v1/trips` — create a new trip record.
+- `POST /api/v1/locations` — attach a new location to an existing trip.
 
 ## Local Development
 
@@ -66,7 +77,7 @@ The project can be run either entirely through Docker Compose or by starting the
    ```
 
 2. Once the services are up:
-   - API: http://localhost:4000 (Express + Knex)
+   - API: http://localhost:4000 (Express + Objection.js/Knex). Versioned REST base: `/api/v1`.
    - Web: http://localhost:3000 (Next.js frontend)
 
    The frontend container sends browser requests to `http://localhost:4000` but calls the API container internally via

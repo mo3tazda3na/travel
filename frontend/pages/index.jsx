@@ -5,6 +5,7 @@ import TripDetails from '../components/TripDetails.jsx';
 import TripList from '../components/TripList.jsx';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
+const API_TRIPS_BASE = `${API_BASE_URL}/api/v1/trips`;
 
 export default function HomePage() {
   const [trips, setTrips] = useState([]);
@@ -13,7 +14,7 @@ export default function HomePage() {
   const [filters, setFilters] = useState({ year: 'all', country: 'all' });
 
   const fetchTrips = async () => {
-    const response = await fetch(`${API_BASE_URL}/api/trips`);
+    const response = await fetch(API_TRIPS_BASE);
     const data = await response.json();
     setTrips(data);
     if (!selectedTrip && data.length > 0) {
@@ -87,7 +88,7 @@ export default function HomePage() {
   };
 
   const handleSelectTrip = async (trip) => {
-    const response = await fetch(`${API_BASE_URL}/api/trips/${trip.id}`);
+    const response = await fetch(`${API_TRIPS_BASE}/${trip.id}`);
     const data = await response.json();
     syncTripInState(data);
     setSelectedTrip(data);
@@ -95,7 +96,7 @@ export default function HomePage() {
   };
 
   const handleLocationClick = async (location) => {
-    const response = await fetch(`${API_BASE_URL}/api/trips/${location.tripId}`);
+    const response = await fetch(`${API_TRIPS_BASE}/${location.tripId}`);
     const data = await response.json();
     syncTripInState(data);
     setSelectedTrip(data);
@@ -109,7 +110,7 @@ export default function HomePage() {
   }, [selectedTrip, selectedLocation]);
 
   const handleLocationCreated = async (newLocation) => {
-    const response = await fetch(`${API_BASE_URL}/api/trips/${newLocation.trip_id}`);
+    const response = await fetch(`${API_TRIPS_BASE}/${newLocation.trip_id}`);
     const data = await response.json();
     syncTripInState(data);
     setSelectedTrip(data);

@@ -1,37 +1,50 @@
-import db from '../db/knex.js';
+import { Model } from 'objection';
+import '../db/knex.js';
+import Location from './location.js';
+
+class Trip extends Model {
+  static get tableName() {
+    return 'trips';
+  }
+
+  static get relationMappings() {
+    return {
+      locations: {
+        relation: Model.HasManyRelation,
+        modelClass: Location,
+        join: {
+          from: 'trips.id',
+          to: 'locations.trip_id'
+        }
+      }
+    };
+  }
+
+  static get modifiers() {
+    return {
+      orderByVisited(builder) {
+        builder.orderBy('visited_at', 'asc');
+      }
+    };
+  }
+}
 
 export const listTrips = async () => {
-  const trips = await db('trips').select('*').orderBy('start_date', 'desc');
-  const locations = await db('locations').select('*').orderBy('visited_at', 'asc');
-
-  const locationsByTrip = locations.reduce((acc, location) => {
-    if (!acc[location.trip_id]) {
-      acc[location.trip_id] = [];
-    }
-    acc[location.trip_id].push(location);
-    return acc;
-  }, {});
-
-  return trips.map((trip) => ({
-    ...trip,
-    locations: locationsByTrip[trip.id] || []
-  }));
+  return Trip.query()
+    .orderBy('start_date', 'desc')
+    .withGraphFetched('locations(orderByVisited)');
 };
 
 export const getTripById = async (id) => {
-  const trip = await db('trips').where({ id }).first();
-  if (!trip) return null;
-
-  const locations = await db('locations')
-    .where({ trip_id: id })
-    .orderBy('visited_at', 'asc');
-
-  return { ...trip, locations };
+  return Trip.query()
+    .findById(id)
+    .withGraphFetched('locations(orderByVisited)');
 };
 
 export const createTrip = async (tripData) => {
-  const [trip] = await db('trips')
-    .insert(tripData)
-    .returning('*');
-  return { ...trip, locations: [] };
+  const trip = await Trip.query().insertAndFetch(tripData);
+  const tripJson = trip.toJSON ? trip.toJSON() : trip;
+  return { ...tripJson, locations: [] };
 };
+
+export default Trip;
