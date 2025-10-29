@@ -32,16 +32,20 @@ backend/
       entities/           # Trip and Location aggregate roots/value objects
       repositories/       # Repository interfaces describing persistence contracts
     infrastructure/
+      cache/                 # Redis client and cache helpers
       database/
         knex.js           # Knex configuration bound to environment variables
         migrations/       # Database schema definitions
       persistence/
-        objection/        # Objection.js models and repository implementation
+        objection/        # Objection.js models plus trip/location repositories with optional Redis caching
     interfaces/
       http/
         presenters/       # Maps domain entities to JSON responses
         routes/
           v1/             # Versioned Express routers for trips and locations
+        errors/           # HttpError + ValidationError definitions
+        utils/            # Shared helpers (success envelope, etc.)
+        validation/       # RequestRule definitions and validators for inbound payloads
   seeds/
     seed-data.js          # Example seed script with Rome, Istanbul, and Barcelona trips
 .env.example              # Sample environment variables for local development
@@ -67,10 +71,12 @@ The backend follows a lightweight Domain-Driven Design layout:
   operations the domain expects from persistence.
 - **Application layer** — Use cases orchestrate domain behavior (listing trips, creating a trip, adding a location) without
   being concerned with technical details.
-- **Infrastructure layer** — Objection.js models, Knex configuration, and repository implementations fulfill the domain
-  contracts against PostgreSQL.
+- **Infrastructure layer** — Objection.js models, Knex configuration, repository implementations, and Redis cache helpers
+  fulfill the domain contracts while keeping data access efficient.
 - **Interfaces layer** — Express routes and presenters translate HTTP requests/responses to and from the domain model while
   exposing versioned REST resources.
+- **Interface helpers** — Request validation rules, success response helpers, and structured HttpError/ValidationError
+  classes keep transport logic consistent while leaving use cases focused purely on business flow.
 - Legacy direct-model routes and Knex helpers have been removed so new features flow exclusively through the DDD
   use cases and repositories, keeping HTTP concerns decoupled from persistence.
 
@@ -86,7 +92,7 @@ The project can be run either entirely through Docker Compose or by starting the
    cp .env.example .env
    ```
 
-2. When you run the stack with Docker Compose the defaults will work out of the box. If you are running services manually, update `DB_HOST` to point at your local PostgreSQL instance (for example `localhost`).
+2. When you run the stack with Docker Compose the defaults will work out of the box. If you are running services manually, update `DB_HOST` to point at your local PostgreSQL instance (for example `localhost`). Optional Redis TTL env vars (`REDIS_TRIPS_TTL`, `REDIS_TRIP_TTL`, `REDIS_LOCATIONS_TTL`) let you tune how long list/detail queries stay cached.
 
 ### 2. Run with Docker Compose (recommended)
 
@@ -99,6 +105,7 @@ The project can be run either entirely through Docker Compose or by starting the
 2. Once the services are up:
    - API: http://localhost:4000 (Express + Objection.js/Knex). Versioned REST base: `/api/v1`.
    - Web: http://localhost:3000 (Next.js frontend)
+   - Redis: localhost:6379 (key prefix defaults to `travel`)
 
    The frontend container sends browser requests to `http://localhost:4000` but calls the API container internally via
    `API_BASE_URL=http://api:4000`, which is already configured in `docker-compose.yml`.
@@ -113,7 +120,7 @@ The project can be run either entirely through Docker Compose or by starting the
 
 ### 3. Run services manually
 
-1. Ensure PostgreSQL is running locally and matches the credentials in your `.env` file. Create the database defined by `DB_NAME` if it does not already exist.
+1. Ensure PostgreSQL and Redis are running locally and match the credentials in your `.env` file. Create the database defined by `DB_NAME` if it does not already exist. The API falls back to `localhost:6379` for Redis unless overridden.
 
 2. Install dependencies:
 
@@ -149,3 +156,10 @@ The project can be run either entirely through Docker Compose or by starting the
 6. Visit http://localhost:3000 to use the app. Browser requests are sent to the backend using `NEXT_PUBLIC_API_BASE_URL`. Server-side
    API routes (used by the Add Trip/Location forms) fall back to the same value unless `API_BASE_URL` is defined, which is useful when
    running the frontend inside Docker.
+
+### 4. Linting & Code Quality
+
+- Backend: `cd backend && npm run lint` (auto-applies ESLint fixes)
+- Frontend: `cd frontend && npm run lint`
+
+ESLint is configured with separate rule sets for the Node API and Next.js frontend to keep code style consistent and catch common mistakes early.

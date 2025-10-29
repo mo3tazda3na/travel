@@ -24,6 +24,13 @@ services:
       DB_USER: travel_app
       DB_PASSWORD: travel_pass
       DB_NAME: travel_db
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_KEY_PREFIX: travel
+      REDIS_DEFAULT_TTL: 300
+      REDIS_TRIPS_TTL: 300
+      REDIS_TRIP_TTL: 300
+      REDIS_LOCATIONS_TTL: 300
     volumes:
       - ./backend:/usr/src/app
       - /usr/src/app/node_modules
@@ -31,6 +38,7 @@ services:
       - '4000:4000'
     depends_on:
       - db
+      - redis
 
   web:
     build:
@@ -47,6 +55,11 @@ services:
       - '3000:3000'
     depends_on:
       - api
+
+  redis:
+    image: redis:7
+    ports:
+      - '6379:6379'
 
 volumes:
   db_data:
