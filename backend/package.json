@@ -8,7 +8,8 @@
     "start": "node src/app.js",
     "migrate": "knex migrate:latest",
     "seed": "node seeds/seed-data.js",
-    "lint": "eslint \"src/**/*.js\" --fix"
+    "lint": "eslint \"src/**/*.js\" --fix",
+    "prepare": "husky"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -21,6 +22,11 @@
   },
   "devDependencies": {
     "eslint": "^8.57.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.6",
     "nodemon": "^3.1.0"
+  },
+  "lint-staged": {
+    "*.js": "eslint --fix"
   }
 }
