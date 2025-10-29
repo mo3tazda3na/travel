@@ -10,6 +10,9 @@ import {
   url as urlValidator,
 } from '../../validation/validators.js';
 import validateRequest from '../../validation/index.js';
+import authenticate from '../../middleware/authenticate.js';
+import HttpError from '../../errors/HttpError.js';
+import authorize from '../../middleware/authorize.js';
 
 const router = Router();
 
@@ -34,36 +37,82 @@ const createLocationRules = () => ({
   },
 });
 
-router.get('/', async (_req, res, next) => {
-  try {
-    const locations = await container.listLocationsUseCase.execute();
-    sendSuccess(res, locations.map(locationToResponse));
-  } catch (error) {
-    next(error);
+router.use(authenticate);
+
+router.get(
+  '/',
+  authorize('location:list'),
+  async (req, res, next) => {
+    try {
+      const decision = req.authz?.['location:list']?.decision;
+      const locations = await container.listLocationsUseCase.execute({
+        user: req.user,
+        constraints: decision?.constraints,
+      });
+      sendSuccess(res, locations.map(locationToResponse));
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
-router.post('/', async (req, res, next) => {
-  try {
-    const { body } = validateRequest(req, createLocationRules());
+const loadTripForLocation = async (req) => {
+  const validation = validateRequest(req, createLocationRules());
+  req.validated = { ...(req.validated || {}), ...validation };
 
-    const location = await container.addLocationToTripUseCase.execute(
-      body.trip_id,
-      {
-        city: body.city,
-        country: body.country,
-        latitude: body.lat,
-        longitude: body.lng,
-        notes: body.notes ?? '',
-        imageUrl: body.image_url ?? null,
-        visitedAt: body.visited_at ?? null,
+  const trip = await container.getTripUseCase.execute(validation.body.trip_id);
+
+  if (!trip) {
+    throw new HttpError({
+      status: 404,
+      code: 'TRIP_NOT_FOUND',
+      message: 'Trip not found',
+      src: 'locations:loadTrip',
+    });
+  }
+
+  return trip;
+};
+
+router.post(
+  '/',
+  authorize('location:create', {
+    resource: async (req) => loadTripForLocation(req),
+    attach: (req, { resource }) => {
+      req.trip = resource;
+    },
+  }),
+  async (req, res, next) => {
+    try {
+      const { body } = req.validated || validateRequest(req, createLocationRules());
+
+      const location = await container.addLocationToTripUseCase.execute(
+        body.trip_id,
+        {
+          city: body.city,
+          country: body.country,
+          latitude: body.lat,
+          longitude: body.lng,
+          notes: body.notes ?? '',
+          imageUrl: body.image_url ?? null,
+          visitedAt: body.visited_at ?? null,
+        }
+      );
+
+      if (!location) {
+        throw new HttpError({
+          status: 500,
+          code: 'LOCATION_CREATE_FAILED',
+          message: 'Unable to create location',
+          src: 'locations:create',
+        });
       }
-    );
 
-    sendSuccess(res, locationToResponse(location), { status: 201 });
-  } catch (error) {
-    next(error);
+      sendSuccess(res, locationToResponse(location), { status: 201 });
+    } catch (error) {
+      next(error);
+    }
   }
-});
+);
 
 export default router;

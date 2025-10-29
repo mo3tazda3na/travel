@@ -36,6 +36,8 @@ export const mapTripRecord = (record) => {
     endDate: plain.end_date,
     createdAt: plain.created_at,
     locations,
+    userId: plain.user_id ?? null,
+    visibility: plain.visibility ?? 'private',
   });
 };
 
@@ -58,6 +60,8 @@ export const serializeTripEntity = (trip) => ({
   startDate: trip.startDate,
   endDate: trip.endDate,
   createdAt: trip.createdAt,
+  userId: trip.userId,
+  visibility: trip.visibility,
   locations: Array.isArray(trip.locations)
     ? trip.locations.map(serializeLocationEntity)
     : [],
@@ -84,9 +88,21 @@ export const deserializeTripData = (data) =>
     startDate: data.startDate,
     endDate: data.endDate,
     createdAt: data.createdAt,
+    userId: data.userId ?? null,
+    visibility: data.visibility ?? 'private',
     locations: Array.isArray(data.locations)
       ? data.locations.map(deserializeLocationData)
       : [],
   });
 
-export const LOCATIONS_CACHE_KEY = 'locations:all';
+export const LOCATIONS_CACHE_KEY = ({ scope, userId }) => {
+  if (scope === 'all') {
+    return 'locations:all';
+  }
+
+  if (!userId) {
+    return null;
+  }
+
+  return `user:${userId}:locations:${scope || 'own'}`;
+};

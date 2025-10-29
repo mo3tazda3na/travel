@@ -10,7 +10,18 @@ import {
 import TripModel from './models/TripModel.js';
 import LocationModel from './models/LocationModel.js';
 
-const TRIPS_CACHE_KEY = 'trips:all';
+const tripsCacheKey = ({ scope, userId }) => {
+  if (scope === 'all') {
+    return 'trips:all';
+  }
+
+  if (!userId) {
+    return null;
+  }
+
+  return `user:${userId}:trips:${scope || 'own'}`;
+};
+
 const tripCacheKey = (id) => `trip:${id}`;
 
 export default class ObjectionTripRepository extends TripRepository {
@@ -30,47 +41,75 @@ export default class ObjectionTripRepository extends TripRepository {
   }
 
   async getFromCache(key, hydrate) {
-    if (!this.cache) return null;
+    if (!this.cache || !key) return null;
     const cached = await this.cache.get(key);
     return cached ? hydrate(cached) : null;
   }
 
   async setCache(key, value, ttl) {
-    if (!this.cache) return;
+    if (!this.cache || !key) return;
     await this.cache.set(key, value, ttl);
   }
 
   async invalidateCache(keys) {
     if (!this.cache) return;
-    await this.cache.del(keys);
+    const list = (Array.isArray(keys) ? keys : [keys]).filter(Boolean);
+    if (!list.length) return;
+    await this.cache.del(list);
   }
 
-  async listTrips() {
-    const cachedTrips = await this.getFromCache(TRIPS_CACHE_KEY, (payload) =>
-      payload.map(deserializeTripData)
-    );
-    if (cachedTrips) {
-      return cachedTrips;
+  async listTrips({ scope = 'own', userId } = {}) {
+    if (scope !== 'all' && !userId) {
+      return [];
     }
 
-    const trips = await TripModel.query()
+    const cacheKey = tripsCacheKey({ scope, userId });
+    const shouldUseCache = cacheKey && (scope === 'all' || scope === 'own');
+
+    if (shouldUseCache) {
+      const cachedTrips = await this.getFromCache(cacheKey, (payload) =>
+        payload.map(deserializeTripData)
+      );
+      if (cachedTrips) {
+        return cachedTrips;
+      }
+    }
+
+    const query = TripModel.query()
       .orderBy('start_date', 'desc')
       .withGraphFetched('locations');
 
+    if (scope === 'all') {
+      // no additional filters
+    } else if (scope === 'own_or_public') {
+      query.where((builder) => {
+        builder.where('user_id', userId).orWhere('visibility', 'public');
+      });
+    } else {
+      query.where('user_id', userId);
+    }
+
+    const trips = await query;
     const mapped = trips.map(mapTripRecord).filter(Boolean);
-    await this.setCache(
-      TRIPS_CACHE_KEY,
-      mapped.map(serializeTripEntity),
-      this.listTripsTTL
-    );
+
+    if (shouldUseCache) {
+      await this.setCache(
+        cacheKey,
+        mapped.map(serializeTripEntity),
+        this.listTripsTTL
+      );
+    }
+
     return mapped;
   }
 
   async getTripById(id) {
-    const cachedTrip = await this.getFromCache(
-      tripCacheKey(id),
-      deserializeTripData
-    );
+    if (!id) {
+      return null;
+    }
+
+    const cacheKey = tripCacheKey(id);
+    const cachedTrip = await this.getFromCache(cacheKey, deserializeTripData);
     if (cachedTrip) {
       return cachedTrip;
     }
@@ -81,28 +120,36 @@ export default class ObjectionTripRepository extends TripRepository {
 
     const mapped = mapTripRecord(trip);
     if (mapped) {
-      await this.setCache(
-        tripCacheKey(mapped.id),
-        serializeTripEntity(mapped),
-        this.tripTTL
-      );
+      await this.setCache(cacheKey, serializeTripEntity(mapped), this.tripTTL);
     }
     return mapped;
   }
 
   async createTrip(tripInput) {
+    if (!tripInput?.userId) {
+      const error = new Error('Trip userId is required');
+      error.code = 'TRIP_USER_REQUIRED';
+      error.status = 400;
+      throw error;
+    }
+
     const created = await TripModel.query().insertAndFetch({
       name: tripInput.name,
       description: tripInput.description ?? '',
       start_date: tripInput.startDate,
       end_date: tripInput.endDate ?? null,
+      user_id: tripInput.userId,
+      visibility: tripInput.visibility ?? 'private',
     });
 
     const trip = mapTripRecord(created);
     trip.locations = [];
 
     if (trip?.id) {
-      await this.invalidateCache([TRIPS_CACHE_KEY]);
+      await this.invalidateCache([
+        'trips:all',
+        tripsCacheKey({ scope: 'own', userId: trip.userId }),
+      ]);
       await this.setCache(
         tripCacheKey(trip.id),
         serializeTripEntity(trip),
@@ -114,6 +161,16 @@ export default class ObjectionTripRepository extends TripRepository {
   }
 
   async addLocationToTrip(tripId, locationInput) {
+    if (!tripId) {
+      return null;
+    }
+
+    const trip = await TripModel.query().findById(tripId);
+
+    if (!trip) {
+      return null;
+    }
+
     const createdLocation = await LocationModel.query().insertAndFetch({
       trip_id: tripId,
       city: locationInput.city,
@@ -127,9 +184,11 @@ export default class ObjectionTripRepository extends TripRepository {
 
     const location = mapLocationRecord(createdLocation);
     await this.invalidateCache([
-      TRIPS_CACHE_KEY,
+      'trips:all',
+      tripsCacheKey({ scope: 'own', userId: trip.user_id }),
       tripCacheKey(tripId),
-      LOCATIONS_CACHE_KEY,
+      LOCATIONS_CACHE_KEY({ scope: 'all' }),
+      LOCATIONS_CACHE_KEY({ scope: 'own', userId: trip.user_id }),
     ]);
     return location;
   }

@@ -5,6 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { sendSuccess } from './interfaces/http/utils/response.js';
 
 import apiV1Router from './interfaces/http/routes/v1/index.js';
+import adminRouter from './interfaces/http/routes/admin/index.js';
 
 dotenv.config();
 
@@ -18,6 +19,7 @@ app.get('/health', (_req, res) => {
 
 app.use('/api/v1', apiV1Router);
 app.use('/api', apiV1Router);
+app.use('/app/admin', adminRouter);
 
 app.use((err, _req, res, _next) => {
   const logId = err.logId || randomUUID();

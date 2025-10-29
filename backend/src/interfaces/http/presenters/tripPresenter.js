@@ -10,6 +10,8 @@ export const tripToResponse = (trip) => {
     start_date: trip.startDate,
     end_date: trip.endDate,
     created_at: trip.createdAt,
+    user_id: trip.userId,
+    visibility: trip.visibility,
     locations: Array.isArray(trip.locations)
       ? trip.locations.map(locationToResponse)
       : [],

@@ -7,6 +7,8 @@ export default class Trip {
     endDate,
     createdAt = null,
     locations = [],
+    userId = null,
+    visibility = 'private',
   }) {
     this.id = id;
     this.name = name;
@@ -15,6 +17,8 @@ export default class Trip {
     this.endDate = endDate;
     this.createdAt = createdAt;
     this.locations = locations;
+    this.userId = userId;
+    this.visibility = visibility;
   }
 
   addLocation(location) {

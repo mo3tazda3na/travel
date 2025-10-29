@@ -1,5 +1,5 @@
 export default class TripRepository {
-  async listTrips() {
+  async listTrips(_filter) {
     throw new Error('listTrips must be implemented by subclasses');
   }
 

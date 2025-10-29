@@ -40,6 +40,21 @@ export const string =
       return output;
     };
 
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
+
+export const email = () => (value, path) => {
+  if (typeof value !== 'string') {
+    throw createValidationError(`${path} must be a string`, 'VALIDATION_EMAIL');
+  }
+
+  const normalized = value.trim().toLowerCase();
+  if (!emailPattern.test(normalized)) {
+    throw createValidationError(`${path} must be a valid email address`, 'VALIDATION_EMAIL');
+  }
+
+  return normalized;
+};
+
 export const number =
   ({ min, max, integer = false } = {}) =>
     (value, path) => {
@@ -136,3 +151,57 @@ export const enumeration = (values) => (value, path) => {
 
   return value;
 };
+
+export const stringArray =
+  ({ minLength = 0, maxLength, unique = true } = {}) =>
+    (value, path) => {
+      if (!Array.isArray(value)) {
+        throw createValidationError(
+          `${path} must be an array of strings`,
+          'VALIDATION_ARRAY'
+        );
+      }
+
+      if (minLength && value.length < minLength) {
+        throw createValidationError(
+          `${path} must include at least ${minLength} items`,
+          'VALIDATION_ARRAY_MIN'
+        );
+      }
+
+      if (maxLength && value.length > maxLength) {
+        throw createValidationError(
+          `${path} must include no more than ${maxLength} items`,
+          'VALIDATION_ARRAY_MAX'
+        );
+      }
+
+      const mapped = value.map((item, index) => {
+        if (typeof item !== 'string') {
+          throw createValidationError(
+            `${path}[${index}] must be a string`,
+            'VALIDATION_STRING'
+          );
+        }
+        const trimmed = item.trim();
+        if (!trimmed) {
+          throw createValidationError(
+            `${path}[${index}] must be a non-empty string`,
+            'VALIDATION_STRING'
+          );
+        }
+        return trimmed;
+      });
+
+      if (unique) {
+        const distinct = new Set(mapped);
+        if (distinct.size !== mapped.length) {
+          throw createValidationError(
+            `${path} must contain unique values`,
+            'VALIDATION_ARRAY_UNIQUE'
+          );
+        }
+      }
+
+      return mapped;
+    };
